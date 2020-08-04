@@ -1,3 +1,6 @@
+# Import the LinkedList functionality.
+from linkedlist import LinkedList
+
 class HashTableEntry:
     """
     Linked List hash table key/value pair
@@ -21,8 +24,12 @@ class HashTable:
     """
 
     def __init__(self, capacity):
-        # Your code here
-
+        # `Capacity` will be initial size of given storage.
+        self.capacity = capacity
+        # `Storage` will be our mock hashtable. Initalize with a bunch of empty LinkedLists for future mutalation.
+        self.storage = [LinkedList()] * capacity
+        # `Count` will be the amount of active records in the entire Hashtable.
+        self.count = 0
 
     def get_num_slots(self):
         """
@@ -34,7 +41,7 @@ class HashTable:
 
         Implement this.
         """
-        # Your code here
+        return self.capacity
 
 
     def get_load_factor(self):
@@ -43,57 +50,86 @@ class HashTable:
 
         Implement this.
         """
-        # Your code here
-
-
-    def fnv1(self, key):
-        """
-        FNV-1 Hash, 64-bit
-
-        Implement this, and/or DJB2.
-        """
-
-        # Your code here
+        return self.count / self.capacity
 
 
     def djb2(self, key):
-        """
-        DJB2 hash, 32-bit
+        hash = 5381
+        for ltr in key:
+            hash = ((hash << 5) + hash) + ord(ltr)
 
-        Implement this, and/or FNV-1.
-        """
-        # Your code here
+        return hash
 
 
     def hash_index(self, key):
-        """
-        Take an arbitrary key and return a valid integer index
-        between within the storage capacity of the hash table.
-        """
-        #return self.fnv1(key) % self.capacity
         return self.djb2(key) % self.capacity
 
     def put(self, key, value):
-        """
-        Store the value with the given key.
+        # Find the appropriate index for the item to be stored at, given it's hash value.
+        index = self.hash_index(key)
 
-        Hash collisions should be handled with Linked List Chaining.
+        # The first node instance in the LinkedList at the given index in self.storage.
+        linkedlist = self.storage[index]
+        node = self.storage[index].head
 
-        Implement this.
-        """
-        # Your code here
+        # Create instance of HashTableEntry.
+        entry = HashTableEntry(key, value)
 
+        if node == None:
+            # LinkedList is empty.
+            linkedlist.append_to_head(entry)
+            self.count += 1
+        else:
+            item = linkedlist.contains(key)
+
+            if item is None:
+                # Item does not exist in LinkedList yet. Append it.
+                linkedlist.append_to_head(entry) 
+                self.count += 1
+            else:
+                # Item does exist in the LinkedList. Modify it.
+                item.value = value
 
     def delete(self, key):
-        """
-        Remove the value stored with the given key.
+        index = self.hash_index(key)
+        list = self.storage[index]
 
-        Print a warning if the key is not found.
+        # Check to see if the key is in the list.
+        node = list.contains(key)
 
-        Implement this.
-        """
-        # Your code here
-
+        if node is None:
+            # Key is not in the list.
+            return
+        else:
+            # Key is in the list.
+            if list.head is node and node.next is None:
+                # Node is the only item in the list.
+                list.head = None
+                self.count -= 1
+            elif list.head is node and node.next is not None:
+                # Node is head and not the only item in the list.
+                list.head = node.next
+                node.next = None
+                self.count -= 1
+            elif list.head is not node and node.next is None:
+                # Node is at the end of the list.
+                before = list.head
+                while before is not node:
+                    if before.next is node:
+                        break
+                    before = before.next
+                before.next = None
+                self.count -= 1
+            else:
+                # Node is somewhere in the middle.
+                before = list.head
+                while before is not node:
+                    if before.next is node:
+                        break
+                    before = before.next
+                before.next = node.next
+                node.next = None
+                self.count -= 1
 
     def get(self, key):
         """
@@ -103,8 +139,16 @@ class HashTable:
 
         Implement this.
         """
-        # Your code here
+        index = self.hash_index(key)
 
+        node = self.storage[index].head # Points to a reference of a LinkedList node.
+        
+        while node:
+            if node.key == key:
+                return node.value
+            else: node = node.next
+
+        return None
 
     def resize(self, new_capacity):
         """
@@ -113,9 +157,15 @@ class HashTable:
 
         Implement this.
         """
-        # Your code here
-
-
+        self.capacity = new_capacity
+        old_storage = self.storage
+        self.storage = [LinkedList()] * new_capacity
+        
+        for item in old_storage:
+            node = item.head
+            while node:
+                self.put(node.key, node.value)
+                node = node.next
 
 if __name__ == "__main__":
     ht = HashTable(8)
