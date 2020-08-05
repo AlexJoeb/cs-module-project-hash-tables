@@ -1,7 +1,19 @@
 def word_count(s):
-    # Your code here
+    s = s.lower() # Lower case the entire string.
+    s = ' '.join(s.split()) # Remove excessive whitespace in the middle.
 
+    # Remove blacklisted characters.
+    blacklist = ('"', ':', ';', ',', '.', '-', '+', '=', '/', '\\', '|', '[', ']', '{', '}', '(', ')', '*', '^', '&')
+    list = ''.join(char for char in s if char not in blacklist).split()
 
+    cache = {}
+    for word in list:
+        if word not in cache:
+            cache[word] = 0
+        
+        cache[word] += 1
+
+    return cache
 
 if __name__ == "__main__":
     print(word_count(""))
